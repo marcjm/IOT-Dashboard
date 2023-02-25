@@ -1,0 +1,102 @@
+import requests
+import serial
+​
+#-------------------PART 1: TALK TO AGIFY.IO API---------------------------------
+#ive tested these and am 95% sure they work
+​
+#communicates with the api, input is the url and output is that name's age guess also prints the name and age
+def getAge(url):
+    r = requests.get(url)
+    data = r.json()
+    age = data['age']
+    print(data["name"] + str(data["age"]))
+    return age
+​
+#takes two names, returns weither or not the first name's age is bigger than the seconds
+def name(nameA, nameB):
+    URL1 = "https://api.agify.io?name="
+    URL2 = "&country_id=US"
+    
+    urlA = URL1+nameA+URL2
+    A = getAge(urlA)
+    
+    urlB = URL1+nameB+URL2
+    B = getAge(urlB)
+​
+    val = A>B
+    return val
+​
+​
+# --------------------PART 2: SERIAL COMMUNICATION----------------------
+#something was wrong here but chris's ex code (in slack) also did not work so im pretty sure the error was in my rp2040/cable
+​
+val = name("abbie", "marc") #<--- input names here
+​
+s = serial.Serial('COM5', baudrate=115200) #<----------- MAKE SURE YOU CHANGE THE COM PORT TO WHATEVER IT IS ON YOUR COMPUTER
+​
+#code that runs to position 120
+codeA = '''
+import time
+from motorController import *
+​
+board = NanoMotorBoard()
+print("reboot")
+board.reboot()
+time.sleep_ms(500)
+​
+servos = []
+​
+for i in range(4):
+    servos.append(Servo(i))
+​
+for servo in servos:
+    servo.setAngle(120)
+​
+'''
+​
+#code that runs to position 0
+codeB = '''
+import time
+from motorController import *
+​
+board = NanoMotorBoard()
+print("reboot")
+board.reboot()
+time.sleep_ms(500)
+​
+servos = []
+​
+for i in range(4):
+    servos.append(Servo(i))
+​
+for servo in servos:
+    servo.setAngle(0)
+​
+'''
+​
+#encoding everything
+CtrlC = '\x03'
+CtrlD = '\x04'
+CtrlE = '\x05'
+s.write(CtrlE.encode())
+codeA = code.replace('\n','\r\n').encode()
+codeB = code.replace('\n','\r\n').encode()
+​
+​
+#if person 1 is older val is true and point to 180
+if (val == True):
+   print(codeA)
+   s.write(codeA)
+   s.write(CtrlD.encode())
+   print(s.read_all())
+   
+#if person 2 is older val is false and point to 0
+else:
+    print(codeB)
+    s.write(codeB)
+    s.write(CtrlD.encode())
+    print(s.read_all())
+​
+#close the serial port
+s.close()
+​
